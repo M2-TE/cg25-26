@@ -13,7 +13,7 @@ struct Window {
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
         // create a window specifically with OpenGL support
-        _window_p = SDL_CreateWindow("OpenGL Renderer", 1280, 720, SDL_WINDOW_OPENGL);
+        _window_p = SDL_CreateWindow("OpenGL Renderer", 720, 720, SDL_WINDOW_OPENGL);
         if (_window_p == nullptr) std::println("SDL_CreateWindow: {}", SDL_GetError());
 
         // create opengl context

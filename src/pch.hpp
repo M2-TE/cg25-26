@@ -5,9 +5,14 @@
 #include <iterator>
 
 #define SDL_MAIN_USE_CALLBACKS
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-#include <glbinding/gl/gl.h>
-#include <glbinding/glbinding.h>
-#include <glbinding-aux/debug.h>
+#include <SDL3/SDL.h> // main header
+#include <SDL3/SDL_main.h> // entry point
+
+#include <glbinding/gl/gl.h> // opengl headers
+#include <glbinding/glbinding.h> // main header
+#include <glbinding-aux/debug.h> // utils
 using namespace gl;
+
+#include <glm/glm.hpp> // main header
+#include <glm/ext/matrix_transform.hpp> // translation, rotation, etc
+#include <glm/gtc/type_ptr.hpp> // obtain pointers

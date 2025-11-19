@@ -25,3 +25,4 @@ endforeach()
 # add dependencies
 include("cmake/opengl.cmake")
 include("cmake/sdl.cmake")
+include("cmake/glm.cmake")
