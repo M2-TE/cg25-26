@@ -5,7 +5,7 @@ struct Texture {
         // base directory of the executable
         std::string base_path = SDL_GetBasePath();
         std::string full_path = base_path + "assets/textures/" + path;
-
+        
         // load image from disk
         SDL_Surface* texture_raw_p = IMG_Load(full_path.c_str());
         if (texture_raw_p == nullptr) {
@@ -26,6 +26,10 @@ struct Texture {
 
         // free image on cpu side
         SDL_DestroySurface(texture_raw_p);
+
+        // set sampler parameters
+        glTextureParameteri(_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // interpolation mode when scaling image down
+        glTextureParameteri(_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // interpolation mode when scaling image up
     }
     void destroy() {
         glDeleteTextures(1, &_texture);

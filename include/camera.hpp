@@ -16,8 +16,8 @@ struct Camera {
         transform_matrix = glm::rotate(transform_matrix, - _rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
         transform_matrix = glm::translate(transform_matrix, - _position);
         // upload to GPU
-        glUniformMatrix4fv(4, 1, false, glm::value_ptr(transform_matrix));
-        glUniformMatrix4fv(8, 1, false, glm::value_ptr(projection_matrix));
+        glUniformMatrix4fv(8, 1, false, glm::value_ptr(transform_matrix));
+        glUniformMatrix4fv(12, 1, false, glm::value_ptr(projection_matrix));
     }
 
     glm::vec3 _position{ 0, 0, 0 };

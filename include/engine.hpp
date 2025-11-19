@@ -1,4 +1,5 @@
 #pragma once
+#include "time.hpp"
 #include "mesh.hpp"
 #include "input.hpp"
 #include "window.hpp"
@@ -9,9 +10,12 @@
 
 struct Engine {
     Engine() {
+        _time.init();
+
         // create render components
         _window.init(1280, 720);
-        _pipeline.init("default.vert", "default.frag");
+        _pipeline_textured.init("default.vert", "textured.frag");
+        _pipeline_vertcols.init("default.vert", "vertcols.frag");
         _texture.init("grass.png");
         _mesh.init();
 
@@ -22,7 +26,8 @@ struct Engine {
         // destroy in reversed init() order
         _mesh.destroy();
         _texture.destroy();
-        _pipeline.destroy();
+        _pipeline_vertcols.destroy();
+        _pipeline_textured.destroy();
         _window.destroy();
     }
 
@@ -35,27 +40,20 @@ struct Engine {
         return SDL_AppResult::SDL_APP_CONTINUE;
     }
     auto handle_sdl_frame() -> SDL_AppResult {
+        _time.update();
         // choose color to clear screen with
-        if (Keys::down(SDLK_F)) {
-            glClearColor(1.0, 0.5, 0.5, 0.0);
-        }
-        else {
-            glClearColor(0.01, 0.01, 0.01, 0.0);
-        }
+        glClearColor(0.01, 0.01, 0.01, 0.0);
         // clear image before drawing to it
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // bind graphics pipeline containing vertex and fragment shaders
-        _pipeline.bind();
-
         // move via WASDQE
-        float speed = 0.1;
-        if (Keys::down(SDLK_W)) _camera._position.z -= speed;
-        if (Keys::down(SDLK_A)) _camera._position.x -= speed;
-        if (Keys::down(SDLK_S)) _camera._position.z += speed;
-        if (Keys::down(SDLK_D)) _camera._position.x += speed;
-        if (Keys::down(SDLK_Q)) _camera._position.y -= speed;
-        if (Keys::down(SDLK_E)) _camera._position.y += speed;
+        float speed = 2.0 * _time._delta; // 2.0 units per second
+        if (Keys::down(SDLK_W)) _camera.translate(0, 0, -speed);
+        if (Keys::down(SDLK_A)) _camera.translate(-speed, 0, 0);
+        if (Keys::down(SDLK_S)) _camera.translate(0, 0, +speed);
+        if (Keys::down(SDLK_D)) _camera.translate(+speed, 0, 0);
+        if (Keys::down(SDLK_Q)) _camera.translate(0, -speed, 0);
+        if (Keys::down(SDLK_E)) _camera.translate(0, +speed, 0);
 
         // let go of mouse capture when we press ESCAPE
         if (Mouse::captured() && Keys::pressed(SDLK_ESCAPE)) {
@@ -74,11 +72,26 @@ struct Engine {
             _camera._rotation.y -= mouse_sensitivity * Mouse::delta().first;
         }
 
+        // make the transform spin
+        _transform._rotation += 0.5 * _time._delta;
+        _transform._scale = glm::vec3(1.0, 1.0, 1.0) + glm::vec3(1, 1, 1) * float(std::sin(_time._total) * 0.2);
+
+        /// excuting the pipeline for textured drawing
+        // bind graphics pipeline containing vertex and fragment shaders
+        _pipeline_textured.bind();
         // bind camera to the pipeline
         _camera.bind();
-
         // bind and draw mesh
-        // _transform._rotation += 0.5 * _time._delta;
+        _transform._position.x = -2;
+        _transform.bind();
+        _texture.bind();
+        _mesh.bind();
+        _mesh.draw();
+
+        /// executing the pipeline for vertex color drawing
+        _pipeline_vertcols.bind();
+        _camera.bind();
+        _transform._position.x = +2;
         _transform.bind();
         _texture.bind();
         _mesh.bind();
@@ -91,10 +104,12 @@ struct Engine {
         return SDL_AppResult::SDL_APP_CONTINUE;
     }
 
+    Time _time;
     Mesh _mesh;
     Window _window;
     Camera _camera;
     Texture _texture;
-    Pipeline _pipeline;
+    Pipeline _pipeline_textured;
+    Pipeline _pipeline_vertcols;
     Transform _transform;
 };
