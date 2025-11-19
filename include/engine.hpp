@@ -2,18 +2,26 @@
 #include "mesh.hpp"
 #include "input.hpp"
 #include "window.hpp"
+#include "camera.hpp"
+#include "texture.hpp"
 #include "pipeline.hpp"
 #include "transform.hpp"
 
 struct Engine {
     Engine() {
-        _window.init();
+        // create render components
+        _window.init(1280, 720);
         _pipeline.init("default.vert", "default.frag");
+        _texture.init("grass.png");
         _mesh.init();
+
+        // move the camera to the back a little
+        _camera._position.z = 5;
     }
     ~Engine() {
         // destroy in reversed init() order
         _mesh.destroy();
+        _texture.destroy();
         _pipeline.destroy();
         _window.destroy();
     }
@@ -32,27 +40,47 @@ struct Engine {
             glClearColor(1.0, 0.5, 0.5, 0.0);
         }
         else {
-            glClearColor(0.5, 0.5, 0.5, 0.0);
+            glClearColor(0.01, 0.01, 0.01, 0.0);
         }
         // clear image before drawing to it
-        glClear(ClearBufferMask::GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // bind graphics pipeline containing vertex and fragment shaders
         _pipeline.bind();
 
-        // bind and draw all the meshes we want
-        // move via WASD
-        if (Keys::down(SDLK_W)) _transform._position.y += 0.01;
-        if (Keys::down(SDLK_A)) _transform._position.x -= 0.01;
-        if (Keys::down(SDLK_S)) _transform._position.y -= 0.01;
-        if (Keys::down(SDLK_D)) _transform._position.x += 0.01;
-        // rotate via QE
-        if (Keys::down(SDLK_Q)) _transform._rotation.z -= 0.01;
-        if (Keys::down(SDLK_E)) _transform._rotation.z += 0.01;
-        // scale via mouse buttons
-        if (Mouse::down(Mouse::ids::left)) _transform._scale += 0.01;
-        if (Mouse::down(Mouse::ids::right)) _transform._scale -= 0.01;
+        // move via WASDQE
+        float speed = 0.1;
+        if (Keys::down(SDLK_W)) _camera._position.z -= speed;
+        if (Keys::down(SDLK_A)) _camera._position.x -= speed;
+        if (Keys::down(SDLK_S)) _camera._position.z += speed;
+        if (Keys::down(SDLK_D)) _camera._position.x += speed;
+        if (Keys::down(SDLK_Q)) _camera._position.y -= speed;
+        if (Keys::down(SDLK_E)) _camera._position.y += speed;
+
+        // let go of mouse capture when we press ESCAPE
+        if (Mouse::captured() && Keys::pressed(SDLK_ESCAPE)) {
+            Input::register_capture(false);
+            SDL_SetWindowRelativeMouseMode(_window._window_p, Mouse::captured());
+        }
+        // grab mouse capture when we click into the window
+        if (!Mouse::captured() && Mouse::pressed(Mouse::ids::left)) {
+            Input::register_capture(true);
+            SDL_SetWindowRelativeMouseMode(_window._window_p, Mouse::captured());
+        }
+        // camera rotation
+        if (Mouse::captured()) {
+            float mouse_sensitivity = 0.003f;
+            _camera._rotation.x -= mouse_sensitivity * Mouse::delta().second;
+            _camera._rotation.y -= mouse_sensitivity * Mouse::delta().first;
+        }
+
+        // bind camera to the pipeline
+        _camera.bind();
+
+        // bind and draw mesh
+        // _transform._rotation += 0.5 * _time._delta;
         _transform.bind();
+        _texture.bind();
         _mesh.bind();
         _mesh.draw();
 
@@ -65,6 +93,8 @@ struct Engine {
 
     Mesh _mesh;
     Window _window;
+    Camera _camera;
+    Texture _texture;
     Pipeline _pipeline;
     Transform _transform;
 };

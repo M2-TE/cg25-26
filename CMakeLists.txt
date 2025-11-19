@@ -19,7 +19,7 @@ file(GLOB_RECURSE ASSET_FILES
     CONFIGURE_DEPENDS "assets/*")          # globbing expression
 # copy only recently modified or missing asset files next to the executable
 foreach(ASSET_FILE ${ASSET_FILES})
-    configure_file(${ASSET_FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${ASSET_FILE}")
+    configure_file(${ASSET_FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${ASSET_FILE}" COPYONLY)
 endforeach()
 
 # add dependencies

@@ -4,6 +4,7 @@
 struct Vertex {
     glm::vec4 position; // x, y, z, w
     glm::vec4 color; // r, g, b, a
+    glm::vec2 uv; // u, v coordinates for textures
 };
 // sizeof(Index) = 4 bytes
 using Index = GLuint;
@@ -13,30 +14,30 @@ struct Mesh {
         float p = +0.5f; // for readability
         float n = -0.5f; // for readability
         std::vector<Vertex> vertices = {
-            Vertex{ glm::vec4{n, n, p, 1}, glm::vec4{1, 0, 0, 1} }, // front
-            Vertex{ glm::vec4{p, n, p, 1}, glm::vec4{1, 0, 0, 1} },
-            Vertex{ glm::vec4{n, p, p, 1}, glm::vec4{1, 0, 0, 1} },
-            Vertex{ glm::vec4{p, p, p, 1}, glm::vec4{1, 0, 0, 1} },
-            Vertex{ glm::vec4{n, n, n, 1}, glm::vec4{1, 0, 0, 1} }, // back
-            Vertex{ glm::vec4{p, n, n, 1}, glm::vec4{1, 0, 0, 1} },
-            Vertex{ glm::vec4{n, p, n, 1}, glm::vec4{1, 0, 0, 1} },
-            Vertex{ glm::vec4{p, p, n, 1}, glm::vec4{1, 0, 0, 1} },
-            Vertex{ glm::vec4{n, n, n, 1}, glm::vec4{0, 1, 0, 1} }, // left
-            Vertex{ glm::vec4{n, n, p, 1}, glm::vec4{0, 1, 0, 1} },
-            Vertex{ glm::vec4{n, p, n, 1}, glm::vec4{0, 1, 0, 1} },
-            Vertex{ glm::vec4{n, p, p, 1}, glm::vec4{0, 1, 0, 1} },
-            Vertex{ glm::vec4{p, n, n, 1}, glm::vec4{0, 1, 0, 1} }, // right
-            Vertex{ glm::vec4{p, n, p, 1}, glm::vec4{0, 1, 0, 1} },
-            Vertex{ glm::vec4{p, p, n, 1}, glm::vec4{0, 1, 0, 1} },
-            Vertex{ glm::vec4{p, p, p, 1}, glm::vec4{0, 1, 0, 1} },
-            Vertex{ glm::vec4{n, p, n, 1}, glm::vec4{0, 0, 1, 1} }, // top
-            Vertex{ glm::vec4{n, p, p, 1}, glm::vec4{0, 0, 1, 1} },
-            Vertex{ glm::vec4{p, p, n, 1}, glm::vec4{0, 0, 1, 1} },
-            Vertex{ glm::vec4{p, p, p, 1}, glm::vec4{0, 0, 1, 1} },
-            Vertex{ glm::vec4{n, n, n, 1}, glm::vec4{0, 0, 1, 1} }, // bottom
-            Vertex{ glm::vec4{n, n, p, 1}, glm::vec4{0, 0, 1, 1} },
-            Vertex{ glm::vec4{p, n, n, 1}, glm::vec4{0, 0, 1, 1} },
-            Vertex{ glm::vec4{p, n, p, 1}, glm::vec4{0, 0, 1, 1} },
+            Vertex{ glm::vec4{n, n, p, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.33, 0.75} }, // front
+            Vertex{ glm::vec4{p, n, p, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.66, 0.75} },
+            Vertex{ glm::vec4{n, p, p, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.33, 0.50} },
+            Vertex{ glm::vec4{p, p, p, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.66, 0.50} },
+            Vertex{ glm::vec4{n, n, n, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.33, 0.00} }, // back
+            Vertex{ glm::vec4{p, n, n, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.66, 0.00} },
+            Vertex{ glm::vec4{n, p, n, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.33, 0.25} },
+            Vertex{ glm::vec4{p, p, n, 1}, glm::vec4{1, 0, 0, 1}, glm::vec2{0.66, 0.25} },
+            Vertex{ glm::vec4{n, n, n, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{0.00, 0.50} }, // left
+            Vertex{ glm::vec4{n, n, p, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{0.00, 0.25} },
+            Vertex{ glm::vec4{n, p, n, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{0.33, 0.50} },
+            Vertex{ glm::vec4{n, p, p, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{0.33, 0.25} },
+            Vertex{ glm::vec4{p, n, n, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{1.00, 0.50} }, // right
+            Vertex{ glm::vec4{p, n, p, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{1.00, 0.25} },
+            Vertex{ glm::vec4{p, p, n, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{0.66, 0.50} },
+            Vertex{ glm::vec4{p, p, p, 1}, glm::vec4{0, 1, 0, 1}, glm::vec2{0.66, 0.25} },
+            Vertex{ glm::vec4{n, p, n, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.33, 0.25} }, // top
+            Vertex{ glm::vec4{n, p, p, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.33, 0.50} },
+            Vertex{ glm::vec4{p, p, n, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.66, 0.25} },
+            Vertex{ glm::vec4{p, p, p, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.66, 0.50} },
+            Vertex{ glm::vec4{n, n, n, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.33, 0.75} }, // bottom
+            Vertex{ glm::vec4{n, n, p, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.33, 1.00} },
+            Vertex{ glm::vec4{p, n, n, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.66, 0.75} },
+            Vertex{ glm::vec4{p, n, p, 1}, glm::vec4{0, 0, 1, 1}, glm::vec2{0.66, 1.00} },
         };
         std::vector<Index> indices = { 
              0,  1,  3,  3,  2,  0, // front
@@ -79,6 +80,10 @@ struct Mesh {
         glVertexArrayAttribFormat(_buffer_mesh, 1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex::position));
         glVertexArrayAttribBinding(_buffer_mesh, 1, 0);
         glEnableVertexArrayAttrib(_buffer_mesh, 1);
+        // Vertex::uv
+        glVertexArrayAttribFormat(_buffer_mesh, 2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex::position) + sizeof(Vertex::color));
+        glVertexArrayAttribBinding(_buffer_mesh, 2, 0);
+        glEnableVertexArrayAttrib(_buffer_mesh, 2);
     }
     void destroy() {
         glDeleteBuffers(1, &_buffer_indices);

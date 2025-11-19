@@ -3,10 +3,12 @@
 #include <vector>
 #include <fstream>
 #include <iterator>
+#include <chrono>
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h> // main header
 #include <SDL3/SDL_main.h> // entry point
+#include <SDL3_image/SDL_image.h> // image loading
 
 #include <glbinding/gl/gl.h> // opengl headers
 #include <glbinding/glbinding.h> // main header

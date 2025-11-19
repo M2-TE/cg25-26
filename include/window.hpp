@@ -1,7 +1,7 @@
 #pragma once
 
 struct Window { 
-    void init() {
+    void init(int width, int height) {
         // init the SDL video subsystem before anything else
         bool result_sdl = SDL_InitSubSystem(SDL_INIT_VIDEO);
         if (!result_sdl) std::println("SDL_InitSubSystem: {}", SDL_GetError());
@@ -13,7 +13,7 @@ struct Window {
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
         // create a window specifically with OpenGL support
-        _window_p = SDL_CreateWindow("OpenGL Renderer", 720, 720, SDL_WINDOW_OPENGL);
+        _window_p = SDL_CreateWindow("OpenGL Renderer", width, height, SDL_WINDOW_OPENGL);
         if (_window_p == nullptr) std::println("SDL_CreateWindow: {}", SDL_GetError());
 
         // create opengl context
@@ -23,6 +23,12 @@ struct Window {
         // OpenGL function loader
         glbinding::initialize(SDL_GL_GetProcAddress, false);
         glbinding::aux::enableGetErrorCallback();
+
+        // OpenGL settings after initialization
+        glEnable(GL_DEPTH_TEST); // enable depth buffer and depth testing
+        glEnable(GL_CULL_FACE); // cull backfaces
+        glEnable(GL_FRAMEBUFFER_SRGB); // gamma corrected framebuffer
+        SDL_GL_SetSwapInterval(1); // vsync
     }
     void destroy() {
         SDL_Quit();
