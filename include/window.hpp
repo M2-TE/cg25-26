@@ -1,6 +1,6 @@
 #pragma once
 
-struct Window { 
+struct Window {
     void init(int width, int height) {
         // init the SDL video subsystem before anything else
         bool result_sdl = SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -31,6 +31,7 @@ struct Window {
         SDL_GL_SetSwapInterval(1); // vsync
     }
     void destroy() {
+        SDL_DestroyWindow(_window_p);
         SDL_Quit();
     }
 
