@@ -1,12 +1,10 @@
 #pragma once
 #include "time.hpp"
-#include "mesh.hpp"
 #include "input.hpp"
+#include "model.hpp"
 #include "window.hpp"
 #include "camera.hpp"
-#include "texture.hpp"
 #include "pipeline.hpp"
-#include "transform.hpp"
 
 struct Engine {
     Engine() {
@@ -14,20 +12,26 @@ struct Engine {
 
         // create render components
         _window.init(1280, 720);
-        _pipeline_textured.init("default.vert", "textured.frag");
-        _pipeline_vertcols.init("default.vert", "vertcols.frag");
-        _texture.init("grass.png");
-        _mesh.init();
+        _pipeline.init("default.vert", "default.frag");
+
+        // cube with texture
+        _cube_textured.init(Primitive::eCube, "grass.png");
+        _cube_textured._transform._position.x = -2;
+        // cube with vertex colors
+        _cube_vertcols.init(Primitive::eCube);
+        _cube_vertcols._transform._position.x = +2;
+        // sphere
+        _sphere.init(Primitive::eSphere);
 
         // move the camera to the back a little
         _camera._position.z = 5;
     }
     ~Engine() {
         // destroy in reversed init() order
-        _mesh.destroy();
-        _texture.destroy();
-        _pipeline_vertcols.destroy();
-        _pipeline_textured.destroy();
+        _sphere.destroy();
+        _cube_textured.destroy();
+        _cube_vertcols.destroy();
+        _pipeline.destroy();
         _window.destroy();
     }
 
@@ -72,30 +76,14 @@ struct Engine {
             _camera._rotation.y -= mouse_sensitivity * Mouse::delta().first;
         }
 
-        // make the transform spin
-        _transform._rotation += 0.5 * _time._delta;
-        _transform._scale = glm::vec3(1.0, 1.0, 1.0) + glm::vec3(1, 1, 1) * float(std::sin(_time._total) * 0.2);
-
-        /// excuting the pipeline for textured drawing
         // bind graphics pipeline containing vertex and fragment shaders
-        _pipeline_textured.bind();
+        _pipeline.bind();
         // bind camera to the pipeline
         _camera.bind();
         // bind and draw mesh
-        _transform._position.x = -2;
-        _transform.bind();
-        _texture.bind();
-        _mesh.bind();
-        _mesh.draw();
-
-        /// executing the pipeline for vertex color drawing
-        _pipeline_vertcols.bind();
-        _camera.bind();
-        _transform._position.x = +2;
-        _transform.bind();
-        _texture.bind();
-        _mesh.bind();
-        _mesh.draw();
+        _cube_textured.draw();
+        _cube_vertcols.draw();
+        _sphere.draw();
 
         // present drawn image to screen
         SDL_GL_SwapWindow(_window._window_p);
@@ -105,11 +93,10 @@ struct Engine {
     }
 
     Time _time;
-    Mesh _mesh;
+    Model _cube_vertcols;
+    Model _cube_textured;
+    Model _sphere;
     Window _window;
     Camera _camera;
-    Texture _texture;
-    Pipeline _pipeline_textured;
-    Pipeline _pipeline_vertcols;
-    Transform _transform;
+    Pipeline _pipeline;
 };
