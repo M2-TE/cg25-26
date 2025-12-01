@@ -18,3 +18,8 @@ using namespace gl;
 #include <glm/glm.hpp> // main header
 #include <glm/ext/matrix_transform.hpp> // translation, rotation, etc
 #include <glm/gtc/type_ptr.hpp> // obtain pointers
+
+#include <assimp/scene.h> // ability to import "scenes" (multiple objects in one)
+#include <assimp/material.h> // material properties
+#include <assimp/Importer.hpp> // main importer for model files
+#include <assimp/postprocess.h> // post-processing of model files

@@ -23,6 +23,7 @@ foreach(ASSET_FILE ${ASSET_FILES})
 endforeach()
 
 # add dependencies
+include("cmake/assimp.cmake")
 include("cmake/opengl.cmake")
 include("cmake/sdl.cmake")
 include("cmake/glm.cmake")

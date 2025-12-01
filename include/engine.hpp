@@ -11,7 +11,7 @@ struct Engine {
         _time.init();
 
         // create render components
-        _window.init(1280, 720);
+        _window.init(1280, 720, 4);
         _pipeline.init("default.vert", "default.frag");
 
         // cube with texture
@@ -22,6 +22,10 @@ struct Engine {
         _cube_vertcols._transform._position.x = +2;
         // sphere
         _sphere.init(Primitive::eSphere);
+
+        // sponza scene
+        _sponza.init("sponza/sponza.obj");
+        _sponza._transform._scale = glm::vec3{ 0.01f, 0.01f, 0.01f };
 
         // move the camera to the back a little
         _camera._position.z = 5;
@@ -76,11 +80,16 @@ struct Engine {
             _camera._rotation.y -= mouse_sensitivity * Mouse::delta().first;
         }
 
+        // draw wireframe while holding F
+        if (Keys::down(SDLK_F)) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
         // bind graphics pipeline containing vertex and fragment shaders
         _pipeline.bind();
         // bind camera to the pipeline
         _camera.bind();
         // bind and draw mesh
+        _sponza.draw();
         _cube_textured.draw();
         _cube_vertcols.draw();
         _sphere.draw();
@@ -96,6 +105,7 @@ struct Engine {
     Model _cube_vertcols;
     Model _cube_textured;
     Model _sphere;
+    Model _sponza;
     Window _window;
     Camera _camera;
     Pipeline _pipeline;

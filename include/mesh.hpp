@@ -118,25 +118,8 @@ private:
         }
         return { vertices, indices };
     }
-
-public:
-    void init(Primitive primitive) {
-        std::vector<Vertex> vertices;
-        std::vector<Index> indices;
-        switch (primitive) {
-            case Primitive::eCube: {
-                std::tie(vertices, indices) = create_cube();
-                break;
-            }
-            case Primitive::eSphere: {
-                std::tie(vertices, indices) = create_sphere();
-                break;
-            }
-            default: {
-                std::println("Invalid mesh primitive chosen");
-                exit(1);
-            }
-        }
+    void describe_buffers(const std::vector<Vertex>& vertices, const std::vector<Index>& indices) {
+        // make sure to update the index count
         _index_count = indices.size();
 
         // create GPU buffer to store vertices
@@ -179,6 +162,80 @@ public:
         glVertexArrayAttribBinding(_buffer_mesh, 3, 0);
         glEnableVertexArrayAttrib(_buffer_mesh, 3);
     }
+
+public:
+    void init(Primitive primitive) {
+        std::vector<Vertex> vertices;
+        std::vector<Index> indices;
+        switch (primitive) {
+            case Primitive::eCube: {
+                std::tie(vertices, indices) = create_cube();
+                break;
+            }
+            case Primitive::eSphere: {
+                std::tie(vertices, indices) = create_sphere();
+                break;
+            }
+            default: {
+                std::println("Invalid mesh primitive chosen");
+                exit(1);
+            }
+        }
+
+        // describe GPU buffers
+        describe_buffers(vertices, indices);
+    }
+    void init(aiMesh* mesh_p) {
+        // make aiMesh easier to use
+        aiMesh& mesh = *mesh_p;
+
+        // index into the material vector in model.hpp
+        _material_index = mesh.mMaterialIndex;
+
+        // extract vertices from aiMesh
+        std::vector<Vertex> vertices;
+        vertices.reserve(mesh.mNumVertices);
+        for (uint32_t i = 0; i < mesh.mNumVertices; i++) {
+            Vertex vertex;
+            // extract positions
+            vertex.position.x = mesh.mVertices[i].x;
+            vertex.position.y = mesh.mVertices[i].y;
+            vertex.position.z = mesh.mVertices[i].z;
+            // extract normals
+            vertex.normal.x = mesh.mNormals[i].x;
+            vertex.normal.y = mesh.mNormals[i].y;
+            vertex.normal.z = mesh.mNormals[i].z;
+            // potentially extract uv/st coords
+            if (mesh.HasTextureCoords(0)) {
+                vertex.uv.s = mesh.mTextureCoords[0][i].x;
+                vertex.uv.t = mesh.mTextureCoords[0][i].y;
+            }
+            else vertex.uv = {0, 0};
+            // potentially extract vertex colors
+            if (mesh.HasVertexColors(0)) {
+                vertex.color.r = mesh.mColors[0][i].r;
+                vertex.color.g = mesh.mColors[0][i].g;
+                vertex.color.b = mesh.mColors[0][i].b;
+                vertex.color.a = mesh.mColors[0][i].a;
+            }
+            else vertex.color = {1, 1, 1, 1};
+            vertices.push_back(vertex);
+        }
+
+        // extract indices from aiMesh
+        std::vector<uint32_t> indices;
+        indices.reserve(mesh.mNumFaces * 3);
+        for (int i = 0; i < mesh.mNumFaces; i++) {
+            // each face is one triangle
+            aiFace face = mesh.mFaces[i];
+            for (int j = 0; j < face.mNumIndices; j++) {
+                indices.push_back(face.mIndices[j]);
+            }
+        }
+
+        // describe GPU buffers
+        describe_buffers(vertices, indices);
+    }
     void destroy() {
         glDeleteBuffers(1, &_buffer_indices);
         glDeleteBuffers(1, &_buffer_vertices);
@@ -196,4 +253,5 @@ public:
     GLuint _buffer_indices;
     GLuint _buffer_mesh;
     GLuint _index_count;
+    GLuint _material_index = 0;
 };
