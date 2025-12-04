@@ -9,6 +9,7 @@ layout(location = 3) in vec4 in_col;
 layout(location = 0) out vec4 out_color;
 // texture unit
 layout(binding = 0) uniform sampler2D tex_diffuse;
+layout(binding = 1) uniform samplerCube tex_shadow;
 // uniforms
 // start at location 16 as vert/frag shaders in a pipeline share these locations
 layout(location = 16) uniform vec3 camera_pos;
@@ -37,13 +38,37 @@ float calc_specular(vec3 normal, vec3 light_dir) {
     return specular_strength * specular; // scale by "specular"
 }
 
+float calc_shadow(vec3 normal, vec3 light_pos, vec3 light_dir, float light_range) {
+    // vector from light to pixel
+    vec3 light_to_pixel = in_pos - light_pos;
+    // calculate distance from light source to the current pixel
+    float light_distance = length(light_to_pixel);
+    // read from the shadowmap to know min depth that the light can "see"
+    float light_distance_in_shadowmap = texture(tex_shadow, light_to_pixel).r; // depth tex only has 1 channel
+    // since it was scaled down to range between 0 and 1, scale back up to true length
+    light_distance_in_shadowmap = light_distance_in_shadowmap * light_range;
+
+    // due to floating point inaccuracies, we introduce a small bias based on light angle
+    float bias_max = 1.0; // on sharp angles
+    float bias_min = 0.005; // on perpendicular angles
+    float bias = max((1.0 - dot(normal, light_dir) * bias_max), bias_min); 
+
+    // if light_distance_in_shadowmap is smaller, current pixel is behind something from the light's POV
+    if (light_distance_in_shadowmap + bias < light_distance) return 0.0;
+    else return 1.0;
+}
+
 void main() {
     vec3 normal = normalize(in_norm); // make sure its normalized after interpolation
 
     // simulate a light at a static position
+    float light_range = 100.0;
     vec3 light_col = vec3(0.992, 0.984, 0.827); // sun color
-    vec3 light_pos = vec3(1, 3, 2);
+    vec3 light_pos = vec3(3, 3, 0);
     vec3 light_dir = normalize(light_pos - in_pos); // vector from light to current pixel world position
+
+    // calculate shadow influence
+    float shadow = calc_shadow(normal, light_pos, light_dir, light_range);
 
     // calculate ambient light (light influence that is present everywhere)
     float ambient_str = calc_ambient();
@@ -51,11 +76,11 @@ void main() {
 
     // calculate diffuse light (based on angle between normal and light)
     float diffuse_str = calc_diffuse(normal, light_dir);
-    vec3 diffuse_light = light_col * diffuse_str;
+    vec3 diffuse_light = light_col * diffuse_str * shadow;
 
     // calculate specular light (reflecting spots on sharp angles)
     float specular_str = calc_specular(normal, light_dir);
-    vec3 specular_light = light_col * specular_str;
+    vec3 specular_light = light_col * specular_str * shadow;
 
     // interpolate between texture and vertex color
     vec4 texture_color = texture(tex_diffuse, in_uv);

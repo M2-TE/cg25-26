@@ -69,13 +69,23 @@ struct Pipeline {
         glDeleteShader(shader_vertex);
         glDeleteShader(shader_fragment);
     }
+    void create_shadow_framebuffer() {
+        // create framebuffer to store final image in
+        glCreateFramebuffers(1, &_framebuffer);
+        // attach texture to frame buffer (only draw to depth, no color output -> GL_NONE)
+        glNamedFramebufferReadBuffer(_framebuffer, GL_NONE);
+        glNamedFramebufferDrawBuffer(_framebuffer, GL_NONE);
+    }
     void destroy() {
+        glDeleteFramebuffers(1, &_framebuffer);
         glDeleteProgram(_shader_program);
     }
 
     void bind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
         glUseProgram(_shader_program);
     }
 
     GLuint _shader_program;
+    GLuint _framebuffer = 0; // 0 is the default framebuffer in OpenGL
 };

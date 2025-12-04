@@ -82,20 +82,23 @@ struct Model {
             texture.destroy();
         }
     }
-    void draw() {
+    void draw(bool shadow_only = false) {
         // same transform for all sub-meshes
-        _transform.bind();
+        _transform.bind(shadow_only);
 
         // bind and draw sets of mesh/material/texture
         for (uint32_t i = 0; i < _meshes.size(); i++) {
             uint32_t material_index = _meshes[i]._material_index;
 
-            // bind requested material
-            _materials[material_index].bind();
+            // rendering shadow depth maps doesnt need color things
+            if (!shadow_only) {
+                // bind requested material
+                _materials[material_index].bind();
 
-            // only bind the texture when applicable
-            if (_materials[material_index]._texture_contribution > 0.0f) {
-                _textures[material_index].bind();
+                // only bind the texture when applicable
+                if (_materials[material_index]._texture_contribution > 0.0f) {
+                    _textures[material_index].bind();
+                }
             }
 
             // finally, draw this mesh
