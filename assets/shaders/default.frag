@@ -16,6 +16,10 @@ layout(location = 16) uniform vec3 camera_pos;
 layout(location = 17) uniform float texture_contribution = 1.0;
 layout(location = 18) uniform float specular = 1.0;
 layout(location = 19) uniform float specular_shininess = 32.0;
+// light properties
+layout(location = 30) uniform vec3 light_pos = vec3(3, 3, 0);
+layout(location = 31) uniform vec3 light_col = vec3(0.992, 0.984, 0.827);
+layout(location = 32) uniform float light_range = 100.0;
 
 // calculate ambient light strength
 float calc_ambient() {
@@ -38,7 +42,7 @@ float calc_specular(vec3 normal, vec3 light_dir) {
     return specular_strength * specular; // scale by "specular"
 }
 
-float calc_shadow(vec3 normal, vec3 light_pos, vec3 light_dir, float light_range) {
+float calc_shadow(vec3 normal, vec3 light_dir) {
     // vector from light to pixel
     vec3 light_to_pixel = in_pos - light_pos;
     // calculate distance from light source to the current pixel
@@ -62,13 +66,10 @@ void main() {
     vec3 normal = normalize(in_norm); // make sure its normalized after interpolation
 
     // simulate a light at a static position
-    float light_range = 100.0;
-    vec3 light_col = vec3(0.992, 0.984, 0.827); // sun color
-    vec3 light_pos = vec3(3, 3, 0);
     vec3 light_dir = normalize(light_pos - in_pos); // vector from light to current pixel world position
 
     // calculate shadow influence
-    float shadow = calc_shadow(normal, light_pos, light_dir, light_range);
+    float shadow = calc_shadow(normal, light_dir);
 
     // calculate ambient light (light influence that is present everywhere)
     float ambient_str = calc_ambient();

@@ -2,6 +2,7 @@
 #include "time.hpp"
 #include "input.hpp"
 #include "model.hpp"
+#include "light.hpp"
 #include "window.hpp"
 #include "camera.hpp"
 #include "pipeline.hpp"
@@ -32,18 +33,8 @@ struct Engine {
         // move the camera to the back a little
         _camera._position = { 3, 3, 0 };
 
-        ////// create shadow stuff
-        // create shadow texture as cube map
-        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &_shadow_texture);
-        glTextureStorage2D(_shadow_texture, 1, GL_DEPTH_COMPONENT32F, _shadow_width, _shadow_height); // 32F (32-bit float) per pixel
-        // create shadow camera matrices
-        _shadow_projection = glm::perspectiveFov<float>(glm::radians(90.0f), _shadow_width, _shadow_height, 1.0f, _light_range);
-        _shadow_views[0] = glm::lookAt(_light_position, _light_position + glm::vec3(+1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)); // right
-        _shadow_views[1] = glm::lookAt(_light_position, _light_position + glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)); // left
-        _shadow_views[2] = glm::lookAt(_light_position, _light_position + glm::vec3( 0.0f, +1.0f,  0.0f), glm::vec3(0.0f,  0.0f, +1.0f)); // top
-        _shadow_views[3] = glm::lookAt(_light_position, _light_position + glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)); // bottom
-        _shadow_views[4] = glm::lookAt(_light_position, _light_position + glm::vec3( 0.0f,  0.0f, +1.0f), glm::vec3(0.0f, -1.0f,  0.0f)); // back
-        _shadow_views[5] = glm::lookAt(_light_position, _light_position + glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f)); // front
+        // create light for lighting and shadows
+        _light.init();
     }
     ~Engine() {
         // destroy in reversed init() order
@@ -99,25 +90,18 @@ struct Engine {
         handle_inputs();
 
         // draw shadows
-        if (_shadow_dirty) {
+        if (_light._shadow_dirty) {
             _shadow_pipeline.bind();
-            glViewport(0, 0, _shadow_width, _shadow_height);
             // render into each cubemap face separately
             for (uint32_t face_i = 0; face_i < 6; face_i++) {
-                // bind the target shadow map
-                glNamedFramebufferTextureLayer(_shadow_pipeline._framebuffer, GL_DEPTH_ATTACHMENT, _shadow_texture, 0, face_i);
-                // clear it before doing any writing
-                glClear(GL_DEPTH_BUFFER_BIT);
-                // bind the light view+projection matrices (act like it is the camera)
-                glUniformMatrix4fv( 8, 1, false, glm::value_ptr(_shadow_views[face_i]));
-                glUniformMatrix4fv(12, 1, false, glm::value_ptr(_shadow_projection));
+                _light.bind_shadow_write(_shadow_pipeline, face_i);
                 // draw the stuff
                 _sponza.draw(true);
                 _cube_textured.draw(true);
                 _cube_vertcols.draw(true);
                 _sphere.draw(true);
             }
-            _shadow_dirty = false;
+            _light._shadow_dirty = false;
         }
 
         // draw color
@@ -130,8 +114,7 @@ struct Engine {
             // clear image before drawing to it
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // bind shadow textures for reading (slot 1)
-            glBindTextureUnit(1, _shadow_texture);
+            _light.bind_shadow_read();
 
             // bind camera to the pipeline
             _camera.bind();
@@ -159,15 +142,5 @@ struct Engine {
     Camera _camera;
     Pipeline _pipeline;
     Pipeline _shadow_pipeline;
-
-    // shadow settings
-    bool _shadow_dirty = true; // only render shadows when lights or objects moved!
-    float _light_range = 100.0f; // TODO: upload to fragment shader
-    glm::vec3 _light_position{ 3, 3, 0 }; // TODO: upload to FS
-    glm::vec3 _light_color{ 0.992, 0.984, 0.827 }; // TODO: upload to FS
-    GLuint _shadow_width = 4096;
-    GLuint _shadow_height = 4096;
-    GLuint _shadow_texture; // cubemap (6 textures)
-    glm::mat4x4 _shadow_projection;
-    std::array<glm::mat4x4, 6> _shadow_views;
+    Light _light;
 };
