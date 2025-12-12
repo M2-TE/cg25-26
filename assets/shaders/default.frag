@@ -62,6 +62,41 @@ float calc_shadow(vec3 normal, vec3 light_dir) {
     else return 1.0;
 }
 
+// smooth out shadows with percentage-closer-filter (good ol blur)
+float calc_shadow_smooth(vec3 normal, vec3 light_dir) {
+    // vector from light to pixel
+    vec3 light_to_pixel = in_pos - light_pos;
+    // calculate distance from light source to the current pixel
+    float light_distance = length(light_to_pixel);
+
+    // due to floating point inaccuracies, we introduce a small bias based on light angle
+    float bias_max = 1.0; // on sharp angles
+    float bias_min = 0.005; // on perpendicular angles
+    float bias = max((1.0 - dot(normal, light_dir) * bias_max), bias_min); 
+
+    // percentage-closer-filter
+    float shadow = 0.0;
+    float max_samples = 4;
+    float offset_max = 0.005;
+    float offset_step = offset_max / (max_samples * 0.5);
+    for(float x = -offset_max; x < offset_max; x += offset_step) {
+        for(float y = -offset_max; y < offset_max; y += offset_step) {
+            for(float z = -offset_max; z < offset_max; z += offset_step) {
+                // sample shadow texture with a slight offset
+                vec3 sample_vec = light_to_pixel + vec3(x, y, z);
+                float light_distance_in_shadowmap = texture(tex_shadow, sample_vec).r; // depth tex only has 1 channel
+                // since it was scaled down to range between 0 and 1, scale back up to true length
+                light_distance_in_shadowmap *= light_range;
+                if (light_distance_in_shadowmap + bias < light_distance) shadow += 1.0;
+            }
+        }
+    }
+    // normalize shadow from 0 to 1 (blur all samples)
+    shadow /= max_samples * max_samples * max_samples;
+    // invert shadow to get light contribution
+    return 1.0 - shadow;
+}
+
 void main() {
     vec3 normal = normalize(in_norm); // make sure its normalized after interpolation
 

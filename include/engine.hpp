@@ -3,6 +3,7 @@
 #include "input.hpp"
 #include "model.hpp"
 #include "light.hpp"
+#include "audio.hpp"
 #include "window.hpp"
 #include "camera.hpp"
 #include "pipeline.hpp"
@@ -35,9 +36,26 @@ struct Engine {
 
         // create light for lighting and shadows
         _light.init();
+
+        // create an audio stream for default audio device
+        SDL_InitSubSystem(SDL_INIT_AUDIO);
+        // load audio file
+        _doom.init("assets/audio/doom.wav");
+        // create an audio stream for current playback device
+        audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr, nullptr, nullptr);
+        if (audio_stream == nullptr) std::println("{}", SDL_GetError());
+        // get the format of the device (sample rate and such)
+        SDL_AudioSpec device_format;
+        SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &device_format, nullptr);
+        // set up the audio stream to convert from our .wav file sample rate to the device's sample rate
+        if (!SDL_SetAudioStreamFormat(audio_stream, &_doom.spec, &device_format)) std::println("{}", SDL_GetError());
+        // load .wav into the audio stream and play
+        if (!SDL_PutAudioStreamData(audio_stream, _doom.buffer, _doom.buffer_size)) std::println("{}", SDL_GetError());
+        if (!SDL_ResumeAudioStreamDevice(audio_stream)) std::println("{}", SDL_GetError());
     }
     ~Engine() {
         // destroy in reversed init() order
+        SDL_DestroyAudioStream(audio_stream);
         _sphere.destroy();
         _cube_textured.destroy();
         _cube_vertcols.destroy();
@@ -143,4 +161,7 @@ struct Engine {
     Pipeline _pipeline;
     Pipeline _shadow_pipeline;
     Light _light;
+    // audio
+    SDL_AudioStream* audio_stream;
+    Audio _doom;
 };
